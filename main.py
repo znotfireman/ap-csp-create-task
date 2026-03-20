@@ -45,15 +45,7 @@ KEYS: list[Key] = [
         "y": 1,
         "width": None,
         "height": None
-    },
-    {
-        "label": "Jump",
-        "codes": [" "],
-        "x": 0,
-        "y": 2,
-        "width": 3,
-        "height": 1
-    },
+    }
 ]
 
 KEY_WIDTH = 64
