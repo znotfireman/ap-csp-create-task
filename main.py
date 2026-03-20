@@ -1,6 +1,8 @@
 from typing import TypedDict, Optional
 from tkinter import *
 import tkinter.font as tkFont
+import time
+import math
 
 class Key(TypedDict):
     label: str
@@ -47,7 +49,7 @@ KEYS: list[Key] = [
     },
     {
         "label": "Jump",
-        "codes": ["<space>"],
+        "codes": [" "],
         "x": 0,
         "y": 2,
         "width": 3,
@@ -58,15 +60,17 @@ KEYS: list[Key] = [
 KEY_WIDTH = 64
 KEY_HEIGHT = 64
 KEY_TEXT_SIZE = 24
+KEY_TIME_TEXT_SIZE = 12
 KEY_MARGIN = 2
 
-root = Tk(screenName="Bikey", baseName="Bikey", className='Tk', useTk=1)
+root = Tk(screenName="AP CSP", baseName="AP CSP", className='Tk', useTk=1)
 canvas = Canvas(root, background='black')
 canvas.grid(column=0, row=0, sticky=(N, W, E, S))
 
 font = tkFont.Font(family="Arial", size=KEY_TEXT_SIZE)
+time_font = tkFont.Font(family="Arial", size=KEY_TIME_TEXT_SIZE)
 
-def render_key(key: Key, bg_fill, fg_fill):
+def render_key(key: Key, bg_fill, fg_fill, held_at=None):
     label = key.get("label")
     
     x0 = key.get("x") * KEY_WIDTH + KEY_MARGIN
@@ -98,14 +102,31 @@ def render_key(key: Key, bg_fill, fg_fill):
         font=font
     )
     
-keys_pressed = set()
+    if held_at:
+        time_pressed = time.time() - held_at
+
+        # HACK: using a newline as to not deal with layouting
+        time_label = f"\n{time_pressed:.1f}s"
+        
+        canvas.create_text(
+            x0 + real_width / 2,
+            y0 + real_height / 2,
+            text=time_label,
+            fill=fg_fill,
+            justify="center",
+            anchor="n",
+            font=time_font
+        )
+    
+keys_held_at: dict[str, float] = {}
 
 def on_pressed(event: Event):
-    keys_pressed.add(event.char)
+    if event.char not in keys_held_at:
+        keys_held_at[event.char] = time.time()
 
 def on_released(event: Event):
-    if event.char in keys_pressed:
-        keys_pressed.remove(event.char)
+    if event.char in keys_held_at:
+        keys_held_at.pop(event.char)
 
 root.bind("<Key>", on_pressed)
 root.bind("<KeyRelease>", on_released)
@@ -113,15 +134,20 @@ root.bind("<KeyRelease>", on_released)
 def key_loop():
     for key in KEYS:
         is_key_pressed = False
+        held_at = math.inf
         
         for code in key.get("codes"):
-            if code in keys_pressed:
+            if code in keys_held_at:
                 is_key_pressed = True
-                render_key(key, "yellow", "black")
-                break
-            
-        if is_key_pressed == False:
-            render_key(key, "white", "black")
+                key_held_at = keys_held_at[code]
+                
+                if key_held_at < held_at:
+                    held_at = key_held_at
+
+        if is_key_pressed:
+            render_key(key, "yellow", "black", held_at)
+        else:
+            render_key(key, "gray", "white")
             
     # ~60fps
     root.after(16, key_loop)
