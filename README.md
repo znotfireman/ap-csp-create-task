@@ -3,6 +3,8 @@
 My create task for AP Computer Science Principles. Keybound is a keyboard HUD
 for gameplay recordings, especially with precision obstacle courses on Roblox.
 
+https://github.com/user-attachments/assets/85e90f8b-5a92-4971-83fc-ec61eb14d4e7
+
 ## Installation
 
 ```sh
