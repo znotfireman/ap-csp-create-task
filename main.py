@@ -89,8 +89,6 @@ def render_key(key: Key, bg_fill, fg_fill):
         fill=bg_fill
     )
     
-    text_width = font.measure(label)
-    
     canvas.create_text(
         x0 + real_width / 2,
         y0 + real_height / 2,
@@ -99,15 +97,34 @@ def render_key(key: Key, bg_fill, fg_fill):
         justify="center",
         font=font
     )
-
-for key in KEYS:
-    render_key(key, "white", "black")
     
-    def on_pressed(event: Event, key=key):
-        render_key(key, "yellow", "black")
-    
-    for keycode in key.get("codes"):
-        root.bind(keycode, on_pressed)
+keys_pressed = set()
 
-canvas.pack()
+def on_pressed(event: Event):
+    keys_pressed.add(event.char)
+
+def on_released(event: Event):
+    if event.char in keys_pressed:
+        keys_pressed.remove(event.char)
+
+root.bind("<Key>", on_pressed)
+root.bind("<KeyRelease>", on_released)
+
+def key_loop():
+    for key in KEYS:
+        is_key_pressed = False
+        
+        for code in key.get("codes"):
+            if code in keys_pressed:
+                is_key_pressed = True
+                render_key(key, "yellow", "black")
+                break
+            
+        if is_key_pressed == False:
+            render_key(key, "white", "black")
+            
+    # ~60fps
+    root.after(16, key_loop)
+    
+key_loop()
 root.mainloop()
