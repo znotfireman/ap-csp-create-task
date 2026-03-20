@@ -4,6 +4,7 @@ import tkinter.font as tkFont
 import time
 import math
 from pynput import keyboard
+from colorama import Style, Fore
 
 class Key(TypedDict):
     label: str
@@ -119,7 +120,7 @@ def on_press(key: Union[keyboard.Key, Event]):
         # special keys don't have a char field
         if key not in keys_held_at:
             keys_held_at[key] = time.time()
-    
+
 
 def on_release(key: Union[keyboard.Key, Event]):
     try:
@@ -148,28 +149,61 @@ def key_loop():
         else:
             render_key(key, "gray", "white")
     
-    # ~60fps
-    root.after(16, key_loop)
+    # ~30fps
+    root.after(32, key_loop)
     
-preferred_listener = input("Which keyboard listener to use? ('pynput' or 'tkinter', pynput requires setup): ")
+def create_formatter(style, reset):
+    def style(str, style=style, reset=reset):
+        return style + str + reset
     
-if preferred_listener == "pynput":
-    print("Using pynput listener")
-    keyboard.Listener(
-        on_press=on_press,
-        on_release=on_release
-    ).start()
-elif preferred_listener == "tkinter":
-    print("Using tkinter listener")
-    root.bind("<Key>", on_press)
-    root.bind("<KeyRelease>", on_release)
-else:
-    raise "Unknown keyboard listener"
+    return style
+    
+style_dim = create_formatter(Style.DIM, Style.RESET_ALL)
+style_bright = create_formatter(Style.BRIGHT, Style.RESET_ALL)
+
+def quote(str):
+    return style_dim("'") + str + style_dim("'")
+
+# Clears the terminal by printing an abitrary amount of empty lines
+def clear_terminal():
+    print("\n" * 80)
+
+clear_terminal()
+print(style_dim("Welcome to ") + style_bright("Keybound") + style_dim(", the keyboard HUD for gameplay recordings."))
+print("Two keyboard implementations are available:")
+print()
+print(style_bright("pynput"))
+print(style_dim("*"), "Will respond to inputs while the program is unfocused")
+print(style_dim("*"), "Requires adding Python to accessibility permissions on MacOS")
+print()
+print(style_bright("tkinter"))
+print(style_dim("*"), "Will NOT respond to inputs while the program is unfocused")
+print(style_dim("*"), "Requires no setup")
+print()
+
+while True:
+    keyboard_implementation = input(f"Which keyboard implementation should be used? ({quote("pynput")} or {quote("tkinter")}): ")
+
+    if keyboard_implementation == "pynput":
+        print(style_dim("Using pynput..."))
+        keyboard.Listener(on_press=on_press, on_release=on_release).start()
+        break
+    elif keyboard_implementation == "tkinter":
+        print(style_dim("Using tkinter..."))
+        root.bind("<Key>", on_press)
+        root.bind("<KeyRelease>", on_release)
+        break
+    else:
+        clear_terminal()
+        print(Fore.RED + style_bright(f"Unknown keyboard implementation named '{keyboard_implementation}'") + Fore.RESET)
     
 key_loop()
 
 def on_main_loop():
-    print("Window main loop started!")
+    clear_terminal()
+    print(Fore.GREEN + style_bright("Started!") + Fore.RESET)
+    print(style_dim("Check the Dock for a Python window."))
+    print()
     
 root.after(10, on_main_loop)
 root.mainloop()
